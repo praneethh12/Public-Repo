@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Repositories Viewer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+
+    header {
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      padding: 1em;
+    }
+
+    main {
+      max-width: 800px;
+      margin: 20px auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+
+    button {
+      background-color: #333;
+      color: #fff;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #repositories {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .repository {
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1em;
+      background-color: #333;
+      color: #fff;
+      position: relative;
+      bottom: -90px;
+      width: 100%;
+    }
+
+    button:active {
+      box-shadow: 13px 13px 20px rgba(225, 222, 222, 0.1);
+      background-color: grey;
+} 
+    
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Public GitHub repositories</h1>
+  </header>
+
+  <main>
+    <label for="username">GitHub Username:</label>
+    <input type="text" id="username" placeholder="Enter GitHub username">
+
+    <div style="display: flex; gap: 18px;">
+      <div style="flex: 1;">
+        <label for="perPage">Repositories per page:</label>
+        <select id="perPage" style="width: 60px;">
+          <option value="10" selected>10</option>
+          <option value="30">30</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </div>
+      <div >
+        <p><a href="#" id="githubLink" target="_blank"></a></p>
+      </div>
+    </div>
+
+    <button onclick="getRepositories()">Get Repositories</button>
+     
+    <div id="repositories" class="loader">
+    
+    </div>
+    <div id="page" class="loader">
+    
+    </div>
+  </main>
+
+  <footer>
+    <p>Public Github Repositories</p>
+  </footer>
+
+  <script>
+    async function getRepositories() {
+      const username = document.getElementById('username').value;
+      const perPage = document.getElementById('perPage').value;
+      const repositoriesElement = document.getElementById('repositories');
+      const pageElement = document.getElementById('page');
+
+      repositoriesElement.innerHTML = '<div class="loader">Loading repositories...</div>';
+
+      const apiurl = `https://api.github.com/users/${username}/repos?per_page=${perPage}&page=1`;
+      const response = await fetch(apiurl);
+      const repositories = await response.json();
+
+      repositoriesElement.innerHTML = '';
+      if (repositories.length === 0) {
+        repositoriesElement.innerHTML = '<p>No repositories found.</p>';
+      } else {
+        repositories.forEach(repository => {
+          repositoriesElement.innerHTML += `
+            <div class="repository">
+              <h3>${repository.name}</h3>
+              <p>${repository.description || 'No description available'}</p>
+              <p>Language: <span style="color:blue;">${repository.language || 'Not specified'}</span></p>
+              <p>Topics: ${repository.topics.join(', ') || 'No topics'}</p>
+            </div>
+          `;
+        });
+      }
+
+      pageElement.innerHTML = `
+        <label for="page">Page:</label>
+        <select id="page" onchange="getRepositories()">
+          ${Array.from({ length: Math.ceil(repositories.length / perPage) }, (_, index) => `<option value="${index + 1}">${index + 1}</option>`).join('')}
+        </select>
+      `;
+
+      const githubLinkElement = document.getElementById('githubLink');
+      githubLinkElement.href = `https://github.com/${username}`;
+      githubLinkElement.textContent = `GitHub (${username})`;
+    }
+  </script>
+
+</body>
+</html>
